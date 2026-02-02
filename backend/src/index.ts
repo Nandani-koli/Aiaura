@@ -3,6 +3,7 @@ import dotenv from 'dotenv';
 import cors from 'cors';
 import interviewRoutes from "./routes/interview.routes";
 import dashboardRoutes from "./routes/dashboard.routes";
+import authRoutes from "./routes/auth.routes";
 import { connectDB } from './services/db';
 
 console.log("AIaura backend starting...");
@@ -13,7 +14,13 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Middleware
-app.use(cors());
+app.use(
+  cors({
+    origin: "http://localhost:5173", 
+    credentials: true,
+  })
+);
+
 app.use(express.json());
 
 connectDB();
@@ -23,8 +30,9 @@ app.get('/', (req, res) => {
     res.send('AIaura backend is running!');
 });
 
+app.use("/auth", authRoutes);
 app.use("/interview", interviewRoutes);
-app.use("/api/dashboard", dashboardRoutes);
+app.use("/dashboard", dashboardRoutes);
 
 
 

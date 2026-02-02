@@ -49,15 +49,20 @@ export const submitAnswer = async (req: AuthRequest, res: Response) => {
     return res.status(404).json({ error: "Session not found" });
   }
 
+  const MAX_QUESTIONS = 5;
+
   session.answers.push(answer);
 
-  const nextQuestion = await generateInterviewQuestion(
-    session.resumeText,
-    session.jobDescription,
-    session.answers
-  );
+  // Check if interview should end
+  let nextQuestion: string | null = null;
 
-  if (!nextQuestion) {
+  if (session.answers.length < MAX_QUESTIONS) {
+    nextQuestion = await generateInterviewQuestion(
+      session.resumeText,
+      session.jobDescription,
+      session.answers
+    );
+  } else {
     session.completed = true;
   }
 
@@ -67,6 +72,7 @@ export const submitAnswer = async (req: AuthRequest, res: Response) => {
     nextQuestion,
     isCompleted: session.completed,
   });
+
 };
 
 
@@ -79,6 +85,10 @@ export const getFeedback = async (req: AuthRequest, res: Response) => {
     return res.status(401).json({ error: "User not authenticated" });
   }
 
+  if (!sessionId) {
+    return res.status(400).json({ error: "sessionId is required" });
+  }
+
   const session = await (InterviewSession as any).findOne({
     _id: sessionId,
     user: req.userId,
@@ -89,8 +99,8 @@ export const getFeedback = async (req: AuthRequest, res: Response) => {
   }
 
   // ✅ If feedback already exists, return it
-  if (session.feedback) {
-    return res.status(200).json(session.feedback);
+  if (session.feedback && session.feedback.score) {
+    return res.status(200).json(session);
   }
 
   // 🔹 REAL feedback logic (still rule-based, not random)
@@ -115,8 +125,15 @@ export const getFeedback = async (req: AuthRequest, res: Response) => {
   session.feedback = feedback;
   session.completed = true;
 
-  await session.save();
-
-  return res.status(200).json(feedback);
+  try {
+    await session.save();
+    return res.status(200).json({
+      ...session.toObject(),
+      feedback,
+    });
+  } catch (error) {
+    console.error("Error saving feedback:", error);
+    return res.status(500).json({ error: "Failed to save feedback" });
+  }
 };
 
