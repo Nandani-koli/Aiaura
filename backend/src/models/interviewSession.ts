@@ -12,7 +12,8 @@ export interface IInterviewSession extends Document {
         strengths: string[];
         improvements: string[];
         finalVerdict: string;
-    }
+    };
+    stage: "INTRO" | "TECHNICAL_CORE" | "TECHNICAL_DEEP" | "PROBLEM_SOLVING" | "CLOSING";
 }
 
 const InterviewSessionSchema = new Schema<IInterviewSession>({
@@ -28,6 +29,12 @@ const InterviewSessionSchema = new Schema<IInterviewSession>({
         improvements: { type: [String] },
         finalVerdict: { type: String },
     },
+    stage: {
+        type: String,
+        enum: ["INTRO", "TECHNICAL_CORE", "TECHNICAL_DEEP", "PROBLEM_SOLVING", "CLOSING"],
+        default: "INTRO"
+    }
+
 
 });
 
